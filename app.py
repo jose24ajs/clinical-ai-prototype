@@ -62,105 +62,111 @@ stress = st.selectbox(
 
 st.divider()
 
+# ===================== SUBMIT BUTTON =====================
+submitted = st.button("🔍 Predict My Current Health")
+
+if not submitted:
+    st.info("👆 Enter your details and click **Predict My Current Health** to see the result.")
+
 # ===================== AI LOGIC =====================
-risk = 0
-reasons = []
+if submitted:
+    risk = 0
+    reasons = []
 
-# Base medical risk
-if bp > 140:
-    risk += 25
-    reasons.append("Previously high blood pressure")
+    # Medical history impact
+    if bp > 140:
+        risk += 25
+        reasons.append("Previously high blood pressure")
 
-if sugar > 140:
-    risk += 25
-    reasons.append("Previously high blood sugar")
+    if sugar > 140:
+        risk += 25
+        reasons.append("Previously high blood sugar")
 
-# Time factor
-if days > 30:
-    risk += 10
-    reasons.append("Long gap since last medical check")
+    # Time factor
+    if days > 30:
+        risk += 10
+        reasons.append("Long gap since last medical check")
 
-# Lifestyle impact
-if diet in ["High Sugar", "Mostly Junk Food"]:
-    risk += 20
-    reasons.append("Unhealthy food intake")
+    # Lifestyle impact
+    if diet in ["High Sugar", "Mostly Junk Food"]:
+        risk += 20
+        reasons.append("Unhealthy food intake")
 
-if exercise in ["Rarely", "Never"]:
-    risk += 15
-    reasons.append("Lack of physical activity")
+    if exercise in ["Rarely", "Never"]:
+        risk += 15
+        reasons.append("Low physical activity")
 
-if sleep < 6:
-    risk += 10
-    reasons.append("Insufficient sleep")
+    if sleep < 6:
+        risk += 10
+        reasons.append("Insufficient sleep")
 
-if stress == "High":
-    risk += 15
-    reasons.append("High stress level")
+    if stress == "High":
+        risk += 15
+        reasons.append("High stress level")
 
-# ===================== HEALTH STATUS =====================
-if risk >= 70:
-    status = "🔴 High Health Risk"
-elif risk >= 40:
-    status = "🟡 Moderate Risk"
-else:
-    status = "🟢 Stable"
+    # ===================== STATUS =====================
+    if risk >= 70:
+        status = "🔴 High Health Risk"
+    elif risk >= 40:
+        status = "🟡 Moderate Risk"
+    else:
+        status = "🟢 Stable"
 
-# ===================== RESULTS =====================
-st.subheader("📊 Predicted Current Health State")
-st.metric("Health Risk Score", f"{risk} / 100", status)
+    st.subheader("📊 Predicted Current Health State")
+    st.metric("Health Risk Score", f"{risk} / 100", status)
 
-st.divider()
+    st.divider()
 
-# ===================== EXPLANATION =====================
-st.subheader("🧠 Why this prediction?")
-if reasons:
-    for r in reasons:
-        st.write(f"• {r}")
-else:
-    st.write("• No major negative indicators detected")
+    # ===================== EXPLANATION =====================
+    st.subheader("🧠 Why this prediction?")
+    if reasons:
+        for r in reasons:
+            st.write(f"• {r}")
+    else:
+        st.write("• No major negative indicators detected")
 
-st.divider()
+    st.divider()
 
-# ===================== FUTURE WARNING =====================
-st.subheader("🔮 Future Health Outlook")
+    # ===================== FUTURE OUTLOOK =====================
+    st.subheader("🔮 Future Health Outlook")
 
-if status == "🔴 High Health Risk":
-    st.error(
-        "If current habits continue, there is a **high chance of health deterioration**. "
-        "A medical consultation is strongly recommended."
+    if status.startswith("🔴"):
+        st.error(
+            "If current habits continue, your health may **worsen significantly**. "
+            "Preventive action is strongly advised."
+        )
+    elif status.startswith("🟡"):
+        st.warning(
+            "Your health may decline gradually if lifestyle improvements are not made."
+        )
+    else:
+        st.success(
+            "Your health is expected to remain **stable** if current habits continue."
+        )
+
+    st.divider()
+
+    # ===================== ACTIONS =====================
+    st.subheader("✅ AI-Suggested Preventive Actions")
+
+    if status.startswith("🔴"):
+        st.write("- Reduce sugar and junk food immediately")
+        st.write("- Start daily light exercise")
+        st.write("- Improve sleep consistency")
+        st.write("- Consider medical consultation")
+
+    elif status.startswith("🟡"):
+        st.write("- Improve diet balance")
+        st.write("- Increase physical activity")
+        st.write("- Manage stress proactively")
+
+    else:
+        st.write("- Continue healthy habits")
+        st.write("- Regular monitoring recommended")
+
+    st.divider()
+
+    st.caption(
+        "⚠ This tool provides **health awareness and prevention guidance only**. "
+        "It does not replace professional medical advice."
     )
-elif status == "🟡 Moderate Risk":
-    st.warning(
-        "Your health may worsen over time if lifestyle factors are not improved."
-    )
-else:
-    st.success(
-        "Your health is likely to remain stable if current habits continue."
-    )
-
-st.divider()
-
-# ===================== PREVENTIVE ACTIONS =====================
-st.subheader("✅ AI-Suggested Preventive Actions")
-
-if status == "🔴 High Health Risk":
-    st.write("- Reduce sugar and junk food immediately")
-    st.write("- Start light daily exercise")
-    st.write("- Manage stress through relaxation techniques")
-    st.write("- Schedule a medical check-up soon")
-
-elif status == "🟡 Moderate Risk":
-    st.write("- Improve diet balance")
-    st.write("- Increase physical activity")
-    st.write("- Maintain regular sleep schedule")
-
-else:
-    st.write("- Continue healthy habits")
-    st.write("- Regular health monitoring recommended")
-
-st.divider()
-
-st.caption(
-    "⚠ This tool provides **health awareness and prevention guidance only**. "
-    "It does not replace professional medical diagnosis."
-)
