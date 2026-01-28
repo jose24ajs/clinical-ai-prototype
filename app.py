@@ -7,34 +7,39 @@ st.set_page_config(
 
 st.title("🧠 AI CLINIC – Preventive Health Platform")
 
-st.markdown("""
-Welcome to **AI Clinic**, an AI-powered preventive healthcare platform.
-
-This system predicts a user's **current health state**
-using previous reports and lifestyle data.
-""")
-
-st.markdown("## 🚀 Get Started")
-
 st.markdown(
-    """
-    <a href="/1_Login" target="_self">
-        <button style="
-            background-color:#2563eb;
-            color:white;
-            padding:14px 30px;
-            font-size:18px;
-            border:none;
-            border-radius:10px;
-            cursor:pointer;
-        ">
-        🔐 Go to Login
-        </button>
-    </a>
-    """,
-    unsafe_allow_html=True
+    "Predict your current health state using previous reports and lifestyle data."
 )
 
 st.markdown("---")
-st.info("After login, you can access Profile, Reports, and Prediction modules.")
 
+# ---------------- LOGIN ----------------
+if "logged_in" not in st.session_state:
+    st.subheader("🔐 Login")
+
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+
+    if st.button("Login"):
+        if username:
+            st.session_state["logged_in"] = True
+            st.session_state["user"] = username
+            st.success("Login successful! Use the left sidebar to continue.")
+        else:
+            st.error("Please enter a username")
+
+    st.stop()
+
+# ---------------- AFTER LOGIN ----------------
+st.success(f"Welcome, {st.session_state['user']} 👋")
+
+st.markdown("### 🚀 What would you like to do?")
+
+st.markdown(
+    """
+    👉 Use the **left sidebar** to:
+    - 👤 View Profile  
+    - 📄 Select Health Report  
+    - 🧠 Predict Current Health  
+    """
+)
