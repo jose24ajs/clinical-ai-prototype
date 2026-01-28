@@ -17,18 +17,18 @@ page = st.sidebar.radio(
 
 # ---------------- PAGE ROUTING ----------------
 if page == "🔐 Login":
-    st.switch_page("pages/1_Login.py")
+    st.switch_page("1_Login")
 
 elif page == "👤 Profile":
-    st.switch_page("pages/2_Profile.py")
+    st.switch_page("2_Profile")
 
 elif page == "📄 Select Report":
-    st.switch_page("pages/3_Report_Select.py")
+    st.switch_page("3_Report_Select")
 
 elif page == "🧠 Predict Health":
-    st.switch_page("pages/4_Predictor.py")
+    st.switch_page("4_Predictor")
 
-# ---------------- HOME PAGE ----------------
+# ---------------- HOME ----------------
 st.title("🧠 AI CLINIC – Preventive Health Platform")
 
 st.markdown(
