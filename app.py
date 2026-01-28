@@ -1,122 +1,166 @@
 import streamlit as st
 
 st.set_page_config(
-    page_title="AI Clinical Trial Health Predictor",
+    page_title="AI Preventive Health Predictor",
     layout="centered"
 )
 
-st.title("🧠 AI Clinical Trial Health Predictor")
+st.title("🧠 AI Preventive Health Predictor")
 st.markdown(
-    "This system evaluates the **current operational health** of a clinical trial site "
-    "and suggests **future preventive actions** to avoid data quality issues and delays."
+    "Predict your **current health state** using your **last medical report** "
+    "and **lifestyle habits after that report**, without taking a new test."
 )
 
 st.divider()
 
-# ---------------- USER INPUTS ----------------
-st.subheader("📥 Enter Current Site State")
+# ===================== PREVIOUS REPORT =====================
+st.subheader("🧾 Previous Medical Report")
 
-delay_days = st.slider("⏱ Reporting Delay (days)", 0, 20, 3)
-missing_data = st.slider("📉 Missing Data (%)", 0, 50, 10)
-protocol_deviation = st.selectbox("⚠ Protocol Deviation Observed?", ["No", "Yes"])
-query_rate = st.slider("❓ Open Queries (%)", 0, 40, 8)
-workload = st.selectbox("👥 Site Workload", ["Low", "Medium", "High"])
+bp = st.number_input(
+    "Blood Pressure (Systolic, mmHg)",
+    min_value=80,
+    max_value=200,
+    value=120
+)
+
+sugar = st.number_input(
+    "Blood Sugar Level (mg/dL)",
+    min_value=60,
+    max_value=300,
+    value=110
+)
+
+days = st.slider(
+    "Days since last medical report",
+    1, 90, 15
+)
 
 st.divider()
 
-# ---------------- AI RISK LOGIC ----------------
-risk_score = 0
+# ===================== LIFESTYLE =====================
+st.subheader("🍽 Lifestyle After Report")
+
+diet = st.selectbox(
+    "Food intake pattern",
+    ["Balanced", "High Sugar", "High Fat", "Mostly Junk Food"]
+)
+
+exercise = st.selectbox(
+    "Exercise frequency",
+    ["Daily", "3–4 times/week", "Rarely", "Never"]
+)
+
+sleep = st.slider(
+    "Average sleep per day (hours)",
+    3, 9, 7
+)
+
+stress = st.selectbox(
+    "Stress level",
+    ["Low", "Medium", "High"]
+)
+
+st.divider()
+
+# ===================== AI LOGIC =====================
+risk = 0
 reasons = []
 
-if delay_days > 7:
-    risk_score += 25
-    reasons.append("Delayed data reporting")
+# Base medical risk
+if bp > 140:
+    risk += 25
+    reasons.append("Previously high blood pressure")
 
-if missing_data > 20:
-    risk_score += 30
-    reasons.append("High missing data rate")
+if sugar > 140:
+    risk += 25
+    reasons.append("Previously high blood sugar")
 
-if protocol_deviation == "Yes":
-    risk_score += 25
-    reasons.append("Protocol deviation detected")
+# Time factor
+if days > 30:
+    risk += 10
+    reasons.append("Long gap since last medical check")
 
-if query_rate > 15:
-    risk_score += 10
-    reasons.append("High number of unresolved queries")
+# Lifestyle impact
+if diet in ["High Sugar", "Mostly Junk Food"]:
+    risk += 20
+    reasons.append("Unhealthy food intake")
 
-if workload == "High":
-    risk_score += 10
-    reasons.append("High site workload")
+if exercise in ["Rarely", "Never"]:
+    risk += 15
+    reasons.append("Lack of physical activity")
 
-# ---------------- RISK CATEGORY ----------------
-if risk_score >= 70:
-    status = "🔴 Critical Risk"
-elif risk_score >= 40:
-    status = "🟡 Warning"
+if sleep < 6:
+    risk += 10
+    reasons.append("Insufficient sleep")
+
+if stress == "High":
+    risk += 15
+    reasons.append("High stress level")
+
+# ===================== HEALTH STATUS =====================
+if risk >= 70:
+    status = "🔴 High Health Risk"
+elif risk >= 40:
+    status = "🟡 Moderate Risk"
 else:
-    status = "🟢 Healthy"
+    status = "🟢 Stable"
 
-# ---------------- RESULTS ----------------
-st.subheader("📊 AI Health Assessment")
-st.metric("Overall Risk Score", f"{risk_score} / 100", status)
+# ===================== RESULTS =====================
+st.subheader("📊 Predicted Current Health State")
+st.metric("Health Risk Score", f"{risk} / 100", status)
 
 st.divider()
 
-# ---------------- EXPLAINABILITY ----------------
-st.subheader("🧠 Why this assessment?")
+# ===================== EXPLANATION =====================
+st.subheader("🧠 Why this prediction?")
 if reasons:
     for r in reasons:
         st.write(f"• {r}")
 else:
-    st.write("• No major risk factors detected")
+    st.write("• No major negative indicators detected")
 
 st.divider()
 
-# ---------------- FUTURE PREDICTION ----------------
-st.subheader("🔮 Future Health Prediction (Next 30 Days)")
+# ===================== FUTURE WARNING =====================
+st.subheader("🔮 Future Health Outlook")
 
-if status == "🔴 Critical Risk":
+if status == "🔴 High Health Risk":
     st.error(
-        "If current conditions continue, this site is likely to cause **database lock delays**, "
-        "**audit findings**, and **increased monitoring cost**."
+        "If current habits continue, there is a **high chance of health deterioration**. "
+        "A medical consultation is strongly recommended."
     )
-elif status == "🟡 Warning":
+elif status == "🟡 Moderate Risk":
     st.warning(
-        "If unmanaged, this site may gradually move into a **high-risk state**, "
-        "affecting trial timelines."
+        "Your health may worsen over time if lifestyle factors are not improved."
     )
 else:
     st.success(
-        "Site is expected to remain **stable** if current performance is maintained."
+        "Your health is likely to remain stable if current habits continue."
     )
 
 st.divider()
 
-# ---------------- PREVENTIVE ACTIONS ----------------
+# ===================== PREVENTIVE ACTIONS =====================
 st.subheader("✅ AI-Suggested Preventive Actions")
 
-if status == "🔴 Critical Risk":
-    st.write("🔧 **Immediate Actions Required:**")
-    st.write("- Conduct urgent remote or onsite monitoring")
-    st.write("- Allocate additional data entry support")
-    st.write("- Trigger protocol deviation review")
-    st.write("- Daily data review until stabilized")
+if status == "🔴 High Health Risk":
+    st.write("- Reduce sugar and junk food immediately")
+    st.write("- Start light daily exercise")
+    st.write("- Manage stress through relaxation techniques")
+    st.write("- Schedule a medical check-up soon")
 
-elif status == "🟡 Warning":
-    st.write("🛠 **Recommended Actions:**")
-    st.write("- Weekly data quality review")
-    st.write("- Site refresher training")
-    st.write("- Automated reminders for data entry")
-    st.write("- Monitor workload distribution")
+elif status == "🟡 Moderate Risk":
+    st.write("- Improve diet balance")
+    st.write("- Increase physical activity")
+    st.write("- Maintain regular sleep schedule")
 
 else:
-    st.write("✅ **Maintenance Actions:**")
-    st.write("- Continue current monitoring strategy")
-    st.write("- Monthly performance review")
-    st.write("- Encourage best practices")
+    st.write("- Continue healthy habits")
+    st.write("- Regular health monitoring recommended")
 
 st.divider()
 
 st.caption(
-    "⚠ This is a decision-support prototype. It does not replace clinical judgment."
+    "⚠ This tool provides **health awareness and prevention guidance only**. "
+    "It does not replace professional medical diagnosis."
 )
