@@ -1,0 +1,4 @@
+site_id,patient_id,lab_value,normal_range
+Site_001,P001,180,70-140
+Site_002,P003,95,70-140
+Site_003,P004,,70-140
