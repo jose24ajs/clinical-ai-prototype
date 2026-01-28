@@ -12,32 +12,38 @@ monitor = pd.read_csv("data/monitoring_logs.csv")
 
 risk_scores = {}
 
-for site in edc['site_id'].unique():
+for site in edc["site_id"].unique():
     risk = 0
 
-    if len(edc[(edc.site_id == site) & (edc.form_complete == "No")]) > 0:
+    # Incomplete EDC forms
+    if not edc[(edc["site_id"] == site) & (edc["form_complete"] == "No")].empty:
         risk += 30
 
-    if len(lab[(lab.site_id == site) & (lab.lab_value.isna())]) > 0:
+    # Missing lab values
+    if not lab[(lab["site_id"] == site) & (lab["lab_value"].isna())].empty:
         risk += 40
 
-    delay = monitor[monitor.site_id == site].days_delayed.values[0]
+    # Delayed reporting
+    delay = monitor.loc[monitor["site_id"] == site, "days_delayed"].values[0]
     if delay > 7:
         risk += 30
 
-    deviation = monitor[monitor.site_id == site].protocol_deviation.values[0]
+    # Protocol deviations
+    deviation = monitor.loc[monitor["site_id"] == site, "protocol_deviation"].values[0]
     if deviation == "Yes":
         risk += 40
 
     risk_scores[site] = risk
 
-risk_df = pd.DataFrame.from_dict(risk_scores, orient='index', columns=['Risk Score'])
-risk_df['Status'] = risk_df['Risk Score'].apply(
+risk_df = pd.DataFrame.from_dict(
+    risk_scores, orient="index", columns=["Risk Score"]
+)
+risk_df["Status"] = risk_df["Risk Score"].apply(
     lambda x: "🔴 High" if x >= 70 else "🟡 Medium" if x >= 40 else "🟢 Low"
 )
 
 st.subheader("📊 Site Risk Overview")
-st.dataframe(risk_df)
+st.dataframe(risk_df, use_container_width=True)
 
 st.subheader("🚨 AI Alerts & Recommendations")
 for site, score in risk_scores.items():
@@ -45,3 +51,5 @@ for site, score in risk_scores.items():
         st.error(f"{site}: High operational risk detected. Immediate monitoring recommended.")
     elif score >= 40:
         st.warning(f"{site}: Moderate risk detected. Follow-up suggested.")
+    else:
+        st.success(f"{site}: Low risk. No immediate action required.")
