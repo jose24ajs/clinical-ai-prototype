@@ -1,41 +1,67 @@
 import streamlit as st
 
 if "logged_in" not in st.session_state:
-    st.warning("Please login first.")
+    st.error("Please login first.")
     st.stop()
 
-st.title("🧠 AI Health Prediction")
+st.title("🧠 AI Preventive Health Predictor")
 
-report = st.session_state.get("selected_report", "Health")
-st.subheader(f"Selected Report: {report}")
+if "report" not in st.session_state:
+    st.warning("Please select a health report first.")
+    st.stop()
 
-diet = st.selectbox("🍽 Diet", ["Balanced", "High Sugar", "Junk Food"])
-exercise = st.selectbox("🏃 Exercise", ["Daily", "Occasional", "None"])
-sleep = st.slider("😴 Sleep (hours)", 3, 9, 6)
-stress = st.selectbox("😰 Stress Level", ["Low", "Medium", "High"])
+st.subheader("🍎 Lifestyle Since Last Report")
 
-if st.button("Run Prediction"):
-    risk = 0
-    reasons = []
+diet = st.selectbox("Diet Quality", ["Poor", "Average", "Healthy"])
+exercise = st.selectbox("Exercise Frequency", ["None", "1–2 times/week", "3–5 times/week"])
+sleep = st.slider("Average Sleep (hours)", 3, 10, 7)
+stress = st.selectbox("Stress Level", ["Low", "Medium", "High"])
 
-    if diet != "Balanced":
-        risk += 20; reasons.append("Poor diet")
-    if exercise == "None":
-        risk += 20; reasons.append("No exercise")
-    if sleep < 6:
-        risk += 15; reasons.append("Low sleep")
-    if stress == "High":
-        risk += 20; reasons.append("High stress")
+# ---------------- AI LOGIC (RULE-BASED PREDICTION) ----------------
+risk = 0
 
-    st.markdown("---")
+if diet == "Poor":
+    risk += 20
+elif diet == "Average":
+    risk += 10
 
-    if risk >= 60:
-        st.error("🔴 High Risk Detected")
-    elif risk >= 30:
-        st.warning("🟡 Moderate Risk")
+if exercise == "None":
+    risk += 20
+elif exercise == "1–2 times/week":
+    risk += 10
+
+if sleep < 6:
+    risk += 15
+
+if stress == "High":
+    risk += 20
+elif stress == "Medium":
+    risk += 10
+
+days = st.session_state.report["days"]
+risk += min(days // 10, 20)
+
+st.markdown("---")
+
+if st.button("🔮 Predict Current Health"):
+    st.subheader("📈 Prediction Result")
+
+    st.metric("Health Risk Score", f"{risk} / 100")
+
+    if risk < 30:
+        st.success("🟢 Stable – Maintain your current lifestyle.")
+    elif risk < 60:
+        st.warning("🟡 Moderate Risk – Improve diet, sleep, and exercise.")
     else:
-        st.success("🟢 Stable Health")
+        st.error("🔴 High Risk – Medical consultation recommended.")
 
-    st.markdown("### 🧠 Why?")
-    for r in reasons:
-        st.write(f"- {r}")
+    st.markdown("""
+    ### 🧠 Why this prediction?
+    This prediction is based on:
+    - Previous medical report  
+    - Time since last report  
+    - Lifestyle changes  
+    - Preventive AI rules  
+
+    ⚠️ This is **not a diagnosis**, but a **preventive insight tool**.
+    """)
