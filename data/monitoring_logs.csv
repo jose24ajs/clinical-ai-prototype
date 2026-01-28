@@ -1,0 +1,4 @@
+site_id,days_delayed,protocol_deviation
+Site_001,2,No
+Site_002,8,Yes
+Site_003,12,Yes
