@@ -1,24 +1,45 @@
 import streamlit as st
+import pandas as pd
 
+# -------------------------------------------------
+# PAGE CONFIG
+# -------------------------------------------------
 st.set_page_config(
-    page_title="AI Clinic",
+    page_title="AI Clinic – Preventive Health",
     layout="wide"
 )
 
-# ---------------- SESSION INIT ----------------
+# -------------------------------------------------
+# LOAD KAGGLE DATASET
+# -------------------------------------------------
+@st.cache_data
+def load_data():
+    return pd.read_csv("diabetes_prediction_dataset.csv")
+
+data = load_data()
+
+# Dataset-based population baselines
+AVG_GLUCOSE = data["blood_glucose_level"].mean()
+AVG_HBA1C = data["HbA1c_level"].mean()
+
+# -------------------------------------------------
+# SESSION STATE
+# -------------------------------------------------
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# ---------------- LOGIN SCREEN ----------------
+# -------------------------------------------------
+# LOGIN SCREEN
+# -------------------------------------------------
 if not st.session_state.logged_in:
     st.title("🧠 AI CLINIC – Preventive Health Platform")
 
     st.markdown("""
     **AI Clinic** is an AI-powered preventive healthcare system.
 
-    It predicts your **current health condition**
-    using previous medical reports and lifestyle data —
-    without requiring new hospital visits.
+    It predicts a user's **current health risk**
+    using **previous medical reports + lifestyle changes**
+    without requiring new clinical tests.
     """)
 
     st.markdown("---")
@@ -28,17 +49,19 @@ if not st.session_state.logged_in:
     password = st.text_input("Password", type="password")
 
     if st.button("Login"):
-        if username.strip():
+        if username.strip() == "":
+            st.error("Please enter a username")
+        else:
             st.session_state.logged_in = True
             st.session_state.user = username
             st.success("Login successful!")
             st.rerun()
-        else:
-            st.error("Please enter a username")
 
     st.stop()
 
-# ---------------- MAIN APP ----------------
+# -------------------------------------------------
+# MAIN APP
+# -------------------------------------------------
 st.success(f"Welcome, {st.session_state.user} 👋")
 
 tab1, tab2, tab3 = st.tabs([
@@ -47,7 +70,9 @@ tab1, tab2, tab3 = st.tabs([
     "🧠 Health Prediction"
 ])
 
-# ================= TAB 1: PROFILE =================
+# -------------------------------------------------
+# TAB 1: PROFILE
+# -------------------------------------------------
 with tab1:
     st.header("👤 User Profile")
 
@@ -63,41 +88,29 @@ with tab1:
             "height": height,
             "weight": weight
         }
-        st.success("Profile saved")
+        st.success("Profile saved successfully")
 
-# ================= TAB 2: REPORT =================
+# -------------------------------------------------
+# TAB 2: PREVIOUS REPORT
+# -------------------------------------------------
 with tab2:
-    st.header("📄 Previous Medical Report")
+    st.header("📄 Previous Diabetes Report")
 
-    report_type = st.selectbox(
-        "Select report type",
-        ["Blood Pressure", "Blood Sugar", "Heart Health"]
-    )
-
-    bp = sugar = heart = None
-
-    if report_type == "Blood Pressure":
-        bp = st.number_input("Previous BP (Systolic)", 80, 200, 120)
-
-    elif report_type == "Blood Sugar":
-        sugar = st.number_input("Previous Sugar Level (mg/dL)", 50, 300, 110)
-
-    elif report_type == "Heart Health":
-        heart = st.selectbox("Heart Status", ["Normal", "At Risk", "Critical"])
-
-    days = st.slider("Days since report", 1, 180, 30)
+    glucose = st.number_input("Previous Blood Glucose Level (mg/dL)", 50, 400, 110)
+    hba1c = st.number_input("Previous HbA1c Level (%)", 3.0, 15.0, 5.5)
+    days = st.slider("Days since last report", 1, 365, 30)
 
     if st.button("Save Report"):
         st.session_state.report = {
-            "type": report_type,
-            "bp": bp,
-            "sugar": sugar,
-            "heart": heart,
+            "glucose": glucose,
+            "hba1c": hba1c,
             "days": days
         }
-        st.success("Report saved")
+        st.success("Report saved. You can now predict your health.")
 
-# ================= TAB 3: PREDICTOR =================
+# -------------------------------------------------
+# TAB 3: AI HEALTH PREDICTION
+# -------------------------------------------------
 with tab3:
     st.header("🧠 AI Preventive Health Predictor")
 
@@ -105,55 +118,79 @@ with tab3:
         st.warning("Please save a previous report first.")
         st.stop()
 
+    st.subheader("🍎 Lifestyle Since Last Report")
+
     diet = st.selectbox("Diet Quality", ["Poor", "Average", "Healthy"])
-    exercise = st.selectbox("Exercise Frequency", ["None", "1–2/week", "3–5/week"])
+    exercise = st.selectbox("Exercise Frequency", ["None", "1–2 times/week", "3–5 times/week"])
     sleep = st.slider("Average Sleep (hours)", 3, 10, 7)
     stress = st.selectbox("Stress Level", ["Low", "Medium", "High"])
 
+    # ---------------- RISK CALCULATION ----------------
     risk = 0
 
-    if diet == "Poor":
+    # Kaggle dataset–based thresholds
+    if st.session_state.report["glucose"] > AVG_GLUCOSE:
         risk += 20
+
+    if st.session_state.report["hba1c"] > AVG_HBA1C:
+        risk += 20
+
+    # Lifestyle impact
+    if diet == "Poor":
+        risk += 15
     elif diet == "Average":
-        risk += 10
+        risk += 8
 
     if exercise == "None":
-        risk += 20
-    elif exercise == "1–2/week":
-        risk += 10
+        risk += 15
+    elif exercise == "1–2 times/week":
+        risk += 8
 
     if sleep < 6:
-        risk += 15
-
-    if stress == "High":
-        risk += 20
-    elif stress == "Medium":
         risk += 10
 
-    risk += min(st.session_state.report["days"] // 10, 20)
+    if stress == "High":
+        risk += 15
+    elif stress == "Medium":
+        risk += 8
 
-    if st.button("🔮 Predict Health"):
+    # Time decay effect
+    risk += min(st.session_state.report["days"] // 30 * 5, 20)
+
+    risk = min(risk, 100)
+
+    # ---------------- PREDICTION OUTPUT ----------------
+    if st.button("🔮 Predict Current Health"):
         st.metric("Health Risk Score", f"{risk} / 100")
 
         if risk < 30:
-            st.success("🟢 Stable – Keep your lifestyle")
+            st.success("🟢 Low Risk – Your health appears stable.")
         elif risk < 60:
-            st.warning("🟡 Moderate Risk – Improve habits")
+            st.warning("🟡 Moderate Risk – Lifestyle improvements recommended.")
         else:
-            st.error("🔴 High Risk – Consult a doctor")
+            st.error("🔴 High Risk – Medical consultation advised.")
 
         st.markdown("""
-        ### Why this prediction?
-        - Previous medical report
-        - Time since report
-        - Lifestyle habits
-        - Preventive AI logic
+        ### 🧠 Why this prediction?
+        - Thresholds derived from **Kaggle Diabetes Dataset**
+        - Previous glucose & HbA1c levels
+        - Lifestyle changes
+        - Time since last medical report
 
-        ⚠️ This is not a diagnosis.
+        ⚠️ This is a **preventive decision-support tool**, not a diagnosis.
         """)
 
-# ---------------- LOGOUT ----------------
+        st.subheader("📊 Population Insight (Kaggle Data)")
+        st.write("Average Blood Glucose (Dataset):", round(AVG_GLUCOSE, 2))
+        st.write("Average HbA1c (Dataset):", round(AVG_HBA1C, 2))
+
+        st.line_chart(data["blood_glucose_level"].sample(200))
+
+# -------------------------------------------------
+# LOGOUT
+# -------------------------------------------------
 st.markdown("---")
 if st.button("🚪 Logout"):
     st.session_state.clear()
     st.rerun()
+
