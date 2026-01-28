@@ -1,24 +1,28 @@
 import streamlit as st
 
 if "logged_in" not in st.session_state:
-    st.warning("Please login first.")
+    st.error("Please login first.")
     st.stop()
 
-st.title("👤 Patient Profile")
+st.title("👤 User Profile")
 
-st.subheader(f"Welcome, {st.session_state['user']}")
+st.markdown(f"""
+**Username:** {st.session_state.user}
 
-st.markdown("### 📁 Previous Medical Reports")
+This profile stores your baseline health information
+used for predictive analysis.
+""")
 
-reports = {
-    "👁 Eye": "Normal vision, mild strain",
-    "❤️ Heart": "Slight BP elevation",
-    "🩸 Blood Sugar": "Pre-diabetic range"
-}
+age = st.number_input("Age", 1, 120, 25)
+gender = st.selectbox("Gender", ["Male", "Female", "Other"])
+height = st.number_input("Height (cm)", 100, 220, 170)
+weight = st.number_input("Weight (kg)", 30, 200, 65)
 
-for r, v in reports.items():
-    st.info(f"{r} Report: {v}")
-
-st.markdown("---")
-
-st.success("Current Health Status: 🟡 Moderate Risk (last prediction)")
+if st.button("Save Profile"):
+    st.session_state.profile = {
+        "age": age,
+        "gender": gender,
+        "height": height,
+        "weight": weight
+    }
+    st.success("Profile saved successfully!")
